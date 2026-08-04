@@ -47,10 +47,25 @@ function submitLetterList() {
     }
   }
 
-  letterList.value = (letterList.value as string[]).map((ov, index) => {
+  let index = 0
+  for (let ov of letterList.value) {
+    if (typeof ov !== 'string') {
+      throw new TypeError('Bad word')
+    }
     let status: LetterStatus
     if (ov === upperCaseWord[index]) {
       rightNumber += 1
+      // Revert one `EXIST`
+      if (typeof letterTable[ov] === 'number') {
+        for (const value of letterList.value) {
+          if (typeof value === 'object' && value.status === 'EXIST') {
+            value.status = 'WRONG'
+            letterTable[ov] += 1
+          }
+        }
+
+        letterTable[ov] -= 1
+      }
       status = 'CORRECT'
     } else if (typeof letterTable[ov] === 'number' && letterTable[ov] > 0) {
       letterTable[ov] -= 1
@@ -59,8 +74,9 @@ function submitLetterList() {
       status = 'WRONG'
     }
 
-    return { value: ov, status }
-  })
+    ov = { value: ov, status }
+    index++
+  }
 
   if (rightNumber === WORD_LENGTH) {
     emit('success')
